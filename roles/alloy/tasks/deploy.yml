@@ -47,15 +47,30 @@
           stdout: "{{ __brew_alloy_version.stdout }}"
       when: __brew_alloy_version.rc == 0
 
+- name: Store control condition
+  ansible.builtin.set_fact:
+    __deploy_alloy: "{{ __current_deployed_version.stdout is not defined or alloy_version not in __current_deployed_version.stdout }}"
+
+- name: Copy Alloy package from local path to remote host
+  ansible.builtin.copy:
+    src: "{{ alloy_local_package_file }}"
+    dest: "{{ alloy_remote_package_file }}"
+  when:
+    - alloy_local_install
+    - ansible_facts['os_family'] in ['RedHat', 'Rocky', "Suse", 'Debian']
+    - __deploy_alloy | bool
+
 - name: Include RedHat/Rocky setup
   ansible.builtin.include_tasks:
     file: setup-RedHat.yml
-  when: ansible_facts['os_family'] in ['RedHat', 'Rocky']
+  when:
+    - ansible_facts['os_family'] in ['RedHat', 'Rocky']
 
 - name: Include Debian/Ubuntu setup
   ansible.builtin.include_tasks:
     file: setup-Debian.yml
-  when: ansible_facts['os_family'] == 'Debian'
+  when:
+    - ansible_facts['os_family'] == 'Debian'
 
 - name: Include macOS/Darwin setup
   ansible.builtin.include_tasks:
@@ -65,7 +80,17 @@
 - name: Include SUSE setup
   ansible.builtin.include_tasks:
     file: setup-Suse.yml
-  when: ansible_facts['os_family'] == 'Suse'
+  when:
+    - ansible_facts['os_family'] == 'Suse'
+
+- name: Remove Alloy package from temp
+  ansible.builtin.file:
+    path: "{{ alloy_remote_package_file }}"
+    state: absent
+  ignore_errors: true
+  when:
+    - alloy_local_package_path | bool
+    - ansible_facts['os_family'] in ['RedHat', 'Rocky', "Suse", 'Debian']
 
 - name: Alloy systemd override
   when:

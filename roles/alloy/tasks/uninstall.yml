@@ -83,3 +83,11 @@
   ansible.builtin.group:
     name: "alloy"
     state: absent
+
+- name: Remove Alloy package from temp
+  ansible.builtin.file:
+    path: "{{ alloy_remote_package_file }}"
+    state: absent
+  ignore_errors: true
+  when:
+    - alloy_local_package_path | bool

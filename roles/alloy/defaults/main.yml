@@ -4,10 +4,24 @@ alloy_version: "latest"
 alloy_uninstall: false
 alloy_expose_port: false
 alloy_github_api_url: "https://api.github.com/repos/grafana/alloy/releases/latest"
-alloy_download_url_rpm: "https://github.com/grafana/alloy/releases/download/v{{ alloy_version }}/alloy-{{ alloy_version }}-1.{{ __alloy_arch }}.rpm"
-alloy_download_url_deb: "https://github.com/grafana/alloy/releases/download/v{{ alloy_version }}/alloy-{{ alloy_version }}-1.{{ __alloy_arch }}.deb"
+alloy_package_names:
+  RedHat: "alloy-{{ alloy_version }}-1.{{ __alloy_arch }}.rpm"
+  Rocky:  "alloy-{{ alloy_version }}-1.{{ __alloy_arch }}.rpm"
+  Suse:   "alloy-{{ alloy_version }}-1.{{ __alloy_arch }}.rpm"
+  Debian: "alloy_{{ alloy_version }}-1_{{ __alloy_arch }}.deb"
+  Darwin: "{{ __alloy_brew_package }}"
+alloy_package_file: "{{ alloy_package_names[ansible_facts['os_family']] }}"
+alloy_download_url: "https://github.com/grafana/alloy/releases/download/v{{ alloy_version }}/{{ alloy_package_file }}"
 alloy_readiness_check_use_https: false
 alloy_readiness_check_use_proxy: true
+
+# in order to install from local file you must set following variable along with specific alloy_version
+alloy_local_install: false
+alloy_local_package_path: ""
+alloy_local_package_file: "{{ [alloy_local_package_path, alloy_package_file] | path_join }}"
+alloy_remote_package_temp: "/tmp"
+alloy_remote_package_file: "{{ [alloy_remote_package_temp, alloy_package_file] | path_join }}"
+alloy_package: "{{ alloy_local_install | ternary(alloy_remote_package_file, alloy_download_url) }}"
 
 alloy_user_groups: []
 # alloy_user_groups:
